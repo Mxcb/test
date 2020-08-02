@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace:必须有值,自定义的唯一字符串,要求使用:dao接口的全限定名称(完整类名) -->
+<mapper namespace="com.dao.StudentDao">
+    <!--
+      id:你要执行的sql语句的唯一标识,要求使用dao接口中方法名称,使用名称表示要执行的 sql 语句
+      resultType: 查询语句的返回结果ResultSet的数据类型Student,要求使用全限定类名
+    -->
+    <sql id="select">select id,name,email,age from student</sql>
+<!--
+    当参数是简单类型(基本数据类型以及对应的包装类,以及String类型)时,#{}里的内容可以随意。
+    parameterType当参数是简单类型,可以省略。
+    不可以为sql语句同时传递多个参数,如果要传递多个参数可以把参数封装到对象中,此时parameterType属性可以不写;
+    使用注解@Param可以传递多个参数或者使用map集合类型也可以同时传递多个参数。
+    在使用${}字符串拼接的时候,如果是简单类型花括号里可以随便写,如果是引用数据类型,花括号的值只能是value,除非使用注解@Param可以自定义
+    在mysql里空格相当于加号,也就是Java中的字符串拼接
+-->
+    <select id="selectById" resultType="com.domain.Student"><include refid="select"/>where id =#{id}</select>
+<!--    <insert id="insert">insert into student values (#{id},#{name},#{email},#{age})</insert>-->
+    <select id="selectAll" resultType="com.domain.Student"><include refid="select"/></select>
+    <select id="selectOne" resultType="com.domain.Student">
+        <include refid="select"/>where name=#{name}
+    </select>
+    <select id="selectObject" resultType="com.domain.Student">
+        <include refid="select"/>where name=#{name} or age=#{age}
+    </select>
+    <select id="selectTwo" resultType="com.domain.Student">
+        <include refid="select"/>where name=${value}
+    </select>
+    <select id="selectLike" resultType="com.domain.Student">
+        <include refid="select"/>where name like "${value}%"
+<!--        <include refid="select"/>where name like  #{value} "%"  这里"%"前的空格相当于字符串拼接-->
+    </select>
+    <select id="selectMap" resultType="com.domain.Student">
+        <include refid="select"/>where name=#{name} and age=#{age}
+    </select>
+    <select id="selectName" resultType="java.lang.String">
+        select name from student where id=#{id}
+    </select>
+    <select id="selectStrings" resultType="java.lang.String">
+        select name from student
+    </select>
+    <select id="selectMaps" resultType="java.util.Map">
+        <include refid="select"/>
+    </select>
+    <select id="selectAlias" resultType="com.domain.Student">
+        select fullname name,id,email,age from student
+    </select>
+
+    <select id="selectStuMap" resultMap="studentMap">
+        select fullname,id,age,email from student
+    </select>
+    <resultMap id="studentMap" type="com.domain.Student">
+        <id column="id" property="id"/>
+        <result column="fullname" property="name"/>
+        <result column="email" property="email"/>
+        <result column="age" property="age"/>
+    </resultMap>
+
+<!--
+    where标签会自动屏蔽第一个连接符and/or
+-->
+    <select id="selectWhere" resultType="com.domain.Student">
+        <include refid="select"/>
+        <where>
+            <if test="name!=null and name !=''">
+                name like #{name} "%"
+            </if>
+        </where>
+    </select>
+
+<!--    item表示每一次遍历出来的元素,在使用该元素的时候,套用在#{}中-->
+    <select id="selectForEach" resultType="com.domain.Student">
+        <include refid="select"/>
+        WHERE
+        id
+        in
+        <foreach collection="array" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectCascade" resultType="java.util.Map">
+        select s.name sname, c.name cname from student s join class c on s.cid=c.id
+    </select>
+
+    <select id="selectViewObject" resultType="com.vo.ViewObject">
+        select s.name sname, s.id sid,s.email semail,s.age sage,c.id cid,c.name cname from student s join class c on s.cid=c.id
+    </select>
+
+    <select id="selectViewObjectLike" resultType="com.vo.ViewObject">
+        select s.name sname, s.id sid,s.email semail,s.age sage,c.id cid,c.name cname from student s join class c on s.cid=c.id where s.name like "%" #{s} "%"
+    </select>
+</mapper>
+
+
+        <!--
+ sql映射文件:写sql语句的
+ 1.指定约束文件
+     <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+     mybatis-3-mapper.dtd是约束文件的名称，扩展名是dtd
+ 2.约束文件的作用：
+    限制，检查当前文件中出现的标签，属性必须符合mybatis的要求
+ 3.mapper 是当前文件的根标签
+ 4.在当前文件中，可以使用特定的标签，表示数据库的特定操作,
+    <update>:表示更新数据库,标签中写的是update的sql语句...等等
+ -->
